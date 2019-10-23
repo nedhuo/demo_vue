@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:aop="http://www.springframework.org/schema/aop"
+       xmlns:tx="http://www.springframework.org/schema/tx"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+    http://www.springframework.org/schema/beans/spring-beans.xsd
+    http://www.springframework.org/schema/context
+    http://www.springframework.org/schema/context/spring-context.xsd
+    http://www.springframework.org/schema/aop
+    http://www.springframework.org/schema/aop/spring-aop.xsd
+    http://www.springframework.org/schema/tx
+    http://www.springframework.org/schema/tx/spring-tx.xsd">
+
+
+    <!--    配置Spring容器时要扫描的包-->
+    <context:component-scan base-package="com.ned.vue">
+        <!--        不扫描Controller注解的java类-->
+        <context:exclude-filter type="annotation" expression="org.springframework.stereotype.Controller"/>
+    </context:component-scan>
+
+    <!--    加载配置文件-->
+    <context:property-placeholder location="classpath:db.properties"/>
+    <!--    配置mybatis的spring工厂-->
+    <bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+        <property name="dataSource" ref="dataSource"/>
+    </bean>
+    <!--    配置数据源-->
+    <bean id="dataSource" class="com.mchange.v2.c3p0.ComboPooledDataSource">
+        <property name="driverClass" value="${classDriver}"/>
+        <property name="jdbcUrl" value="${dbUrl}"/>
+        <property name="user" value="${dbUser}"/>
+        <property name="password" value="${dbPass}"/>
+    </bean>
+    <!--配置mapper扫描器-->
+    <bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+        <property name="basePackage" value="com.ned.vue.dao"/>
+    </bean>
+<!--    使用注解，可以不用-->
+    <tx:annotation-driven/>
+    <!--    配置事务管理器-->
+    <bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+        <property name="dataSource" ref="dataSource"/>
+    </bean>
+
+    <!--    配置事务的通知-->
+    <tx:advice id="txAdvice" transaction-manager="transactionManager">
+        <tx:attributes>
+            <tx:method name="*" propagation="REQUIRED" read-only="false"/>
+            <tx:method name="find" propagation="SUPPORTS" read-only="true"/>
+        </tx:attributes>
+    </tx:advice>
+
+    <!--    配置Aop-->
+    <aop:config>
+        <aop:pointcut id="pt1" expression="execution(* com.ned.vue.service.impl.*.*(..))"/>
+        <aop:advisor advice-ref="txAdvice" pointcut-ref="pt1"/>
+    </aop:config>
+    <!-- Spring的入门的配置==================== -->
+    <!-- 	<bean name="userDAO" class="com.itheima.spring.demo1.UserDAOImpl" > -->
+    <!-- 		<property name="name" value="李东"/> -->
+    <!-- 	</bean> -->
+
+    <!--   scope			：Bean的作用范围-->
+    <!--        singleton		：默认的，Spring会采用单例模式创建这个对象。-->
+    <!--        prototype	：多例模式。（Struts2和Spring整合一定会用到）-->
+    <!--        request		：应用在web项目中，Spring创建这个类以后，将这个类存入到request范围中。-->
+    <!--        session		：应用在web项目中，Spring创建这个类以后，将这个类存入到session范围中。-->
+    <!--        globalsession	：应用在web项目中，必须在porlet环境下使用。但是如果没有这种环境，相对于session。-->
+
+    <!--    init-method="init" destroy-method="destroy"  生命周期的配置-->
+    <!--    <bean name="userDaoImpl" class="com.nedhuo.spring.dao.impl.UserDaoImpl"-->
+    <!--          init-method="init" destroy-method="destroy"-->
+    <!--          scope="prototype">-->
+    <!--        <property name="user" value="大孙子"/>-->
+    <!--    </bean>-->
+    <!--    <bean name="userDao2Impl" class="com.nedhuo.spring.dao.impl.UserDao2Impl"-->
+    <!--          init-method="init" destroy-method="destroy"-->
+    <!--          scope="prototype">-->
+    <!--        <property name="user" value="孙子"/>-->
+    <!--    </bean>-->
+
+    <!-- Spring的Bean的实例化的方式============= -->
+    <!-- 无参数构造方法 -->
+    <!-- 	<bean id="bean1" class="com.itheima.spring.demo3.Bean1"></bean> -->
+
+    <!-- 静态工厂实例化 -->
+    <!-- 	<bean id="bean2" class="com.itheima.spring.demo3.Bean2Factory" factory-method="createBean2"/> -->
+
+    <!-- 实例工厂实例化 -->
+    <!-- 	<bean id="bean3Factory" class="com.itheima.spring.demo3.Bean3Factory"></bean> -->
+    <!-- 	<bean id="bean3" factory-bean="bean3Factory" factory-method="createBean3"></bean> -->
+
+
+    <!-- Spring的属性注入的方式================== -->
+    <!-- 构造方法的方式 -->
+    <!--    <bean id="car" class="com.itheima.spring.demo4.Car">-->
+    <!--        <constructor-arg name="name" value="宝马"/>-->
+    <!--        <constructor-arg name="price" value="800000"/>-->
+    <!--    </bean>-->
+
+    <!-- set方法的方式 -->
+    <!-- 	<bean id="car2" class="com.itheima.spring.demo4.Car2">
+            <property name="name" value="奔驰"/>
+            <property name="price" value="1000000"/>
+        </bean> -->
+
+    <!-- set方法注入对象类型的属性 -->
+    <!-- <bean id="employee" class="com.itheima.spring.demo4.Employee">
+        value:设置普通类型的值，ref:设置其他的类的id或name
+        <property name="name" value="涛哥"/>
+        <property name="car2" ref="car2"/>
+    </bean> -->
+
+    <!-- 改为p名称空间的方式 -->
+    <!-- <bean id="car2" class="com.itheima.spring.demo4.Car2" p:name="奇瑞QQ" p:price="30000"></bean>
+
+    <bean id="employee" class="com.itheima.spring.demo4.Employee" p:name="王东" p:car2-ref="car2"></bean> -->
+
+    <!-- SpEL的属性注入 -->
+    <!--    <bean id="carInfo" class="com.itheima.spring.demo4.CarInfo">-->
+    <!--    </bean>-->
+
+    <!--    <bean id="car2" class="com.itheima.spring.demo4.Car2">-->
+    <!--        <property name="name" value="#{carInfo.name}"></property>-->
+    <!--        <property name="price" value="#{carInfo.calculatorPrice()}"></property>-->
+    <!--    </bean>-->
+
+    <!--    <bean id="employee" class="com.itheima.spring.demo4.Employee">-->
+    <!--        <property name="name" value="#{'赵洪'}"></property>-->
+    <!--        <property name="car2" value="#{car2}"></property>-->
+    <!--    </bean>-->
+
+    <!--    <import resource="applicationContext2.xml"/>-->
+</beans>
